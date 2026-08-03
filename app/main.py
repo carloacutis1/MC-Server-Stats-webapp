@@ -9,6 +9,9 @@ RCON_HOST = "10.40.0.100"
 RCON_PORT = 25575
 RCON_PASS = "carlo"
 
+# define list of player names connected
+names = []
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Runs once on startup: open a single shared RCON connection and stash it
