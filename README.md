@@ -17,3 +17,18 @@ Observability stack for Minecraft server
 7. Deploy it on your Ubuntu box. Run it as a systemd service or in Docker, sitting alongside the Minecraft server. Now it's live 24/7, which is what lets you say "running in production" with a straight face.
 
 8. Polish for the resume. A good README with an architecture diagram, some tests, maybe GitHub Actions running them on push. This step is disproportionately valuable relative to effort — the README is what a hiring manager actually looks at.
+
+
+
+# Endpoints
+
+Users online
+
+Player health
+
+player POSition
+
+player hunger
+
+player xp
+
