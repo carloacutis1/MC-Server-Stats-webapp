@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-# Basic health-check / sanity-check route
+# Basic sanity-check route
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -57,7 +57,7 @@ async def getSeed(request: Request):
 
 
 # TODO: not implemented yet - should return the list of online players
-@app.get("/playersOnline")
+@app.get("/players/online")
 async def getOnlinePlayers(request: Request):
     try:
         response, _ = await request.app.state.rcon.send_cmd("list")
@@ -78,33 +78,45 @@ async def getOnlinePlayers(request: Request):
 
         names = names[0].group(1)
 
-        # if there are multiple players online, separate each name into elements of a list
-        if int(num_online) > 1:
-            names = names.split(", ")
+        # separate each name into elements of a list
+        names = names.split(", ")
 
         # return the list of names 
-        return {"Number of players online": num_online, "Connect Users": names}
+        return {"Number of players online": num_online, "Connected Users": names}
 
     return "There are no players online."
 
+# return all of a player's info
+@app.get("/players/{name}")
+async def getPlayerStats(name: str, request: Request):
+    try:
+        response, _ = await request.app.state.rcon.send_cmd("data get entity {name}")
+    except Exception:
+        raise HTTPException(status_code=502, detail="Failed to reach Minecraft Server")
 
+    # if there the player is not online 
+    if response = "No entity was found":
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    
+    return {"message": }
 
-# TODO: not implemented yet - should return a given player's health
-@app.get("/playerHealth")
-async def getPlayerHealth():
+# return a given player's health
+@app.get("/players/{name}/health")
+async def getPlayerHealth(name: str, reguest: Request):
     return {"message": "Player Health"}
 
 # TODO: not implemented yet - should return a given player's position
-@app.get("/playerPos")
+@app.get("/players/{name}/position")
 async def getPlayerPos():
     return {"message": "Players Online"}
 
 # TODO: not implemented yet - should return a given player's hunger/food level
-@app.get("/playerHunger")
+@app.get("/players/{name}/hunger")
 async def getPlayerHunger():
     return {"message": "Player Hunger"}
 
 # TODO: not implemented yet - should return a given player's XP level
-@app.get("/playerXp")
+@app.get("/players/{name}/xp")
 async def getPlayerXp():
-    return {"message": "Player XP"}
+    return {"message": "Player xp"}
