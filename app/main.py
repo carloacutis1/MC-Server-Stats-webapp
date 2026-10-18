@@ -31,6 +31,22 @@ async def lifespan(app: FastAPI):
 # Create the FastAPI app, wiring in the lifespan handler above for startup/shutdown
 app = FastAPI(lifespan=lifespan)
 
+# helper function to get player data
+async def get_entity_data(rcon, name : str, field : str) -> str:
+    try:
+        response, _ = await request.app.state.rcon.send_cmd("data get entity {name} {field}")
+    except Exception:
+        # RCON call failed (e.g. connection dropped) - surface as a bad gateway
+        raise HTTPException(status_code=502, detail="Failed to reach Minecraft server")
+
+    # if there the player is not online 
+    if response = "No entity was found":
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    match = re.search(r"(?<=\:)(\[.+\])")
+
+    return {"message": match}
+
 
 # Basic sanity-check route
 @app.get("/")
@@ -55,8 +71,7 @@ async def getSeed(request: Request):
     # return the first capture group
     return {"seed": int(match.group(1))}
 
-
-# TODO: not implemented yet - should return the list of online players
+# get players online 
 @app.get("/players/online")
 async def getOnlinePlayers(request: Request):
     try:
@@ -94,11 +109,9 @@ async def getPlayerStats(name: str, request: Request):
     except Exception:
         raise HTTPException(status_code=502, detail="Failed to reach Minecraft Server")
 
-    # if there the player is not online 
-    if response = "No entity was found":
-        raise HTTPException(status_code=404, detail="Player not found")
     
     
+
     return {"message": }
 
 # return a given player's health
