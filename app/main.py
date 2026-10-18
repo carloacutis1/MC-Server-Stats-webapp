@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     except Exception:
         # Don't crash the whole API if the game server is unreachable at boot
         # just log it and let RCON-dependent routes fail individually later.
-        print(f"Warning: could not connect to RCON at {RCON_HOST}:{RCON_PORT}; /seed will be unavailable")
+        print(f"Warning: could not connect to RCON at {RCON_HOST}:{RCON_PORT}")
     yield
     # Runs once on shutdown: close the RCON connection if it was ever established.
     if app.state.rcon._ready:
@@ -34,18 +34,20 @@ app = FastAPI(lifespan=lifespan)
 # helper function to get player data
 async def get_entity_data(rcon, name : str, field : str) -> str:
     try:
-        response, _ = await request.app.state.rcon.send_cmd("data get entity {name} {field}")
+        response, _ = await rcon.send_cmd(f"data get entity {name} {field}")
     except Exception:
         # RCON call failed (e.g. connection dropped) - surface as a bad gateway
         raise HTTPException(status_code=502, detail="Failed to reach Minecraft server")
 
     # if there the player is not online 
-    if response = "No entity was found":
+    if response == "No entity was found":
         raise HTTPException(status_code=404, detail="Player not found")
 
-    match = re.search(r"(?<=\:)(\[.+\])")
+    match = re.search(r"entity data: (.+)", response)
+    if not match:
+        raise HTTPException(status_code=502, detail=f"Unexpected RCON response: {response}")
 
-    return {"message": match}
+    return {"message": match.group(1)}
 
 
 # Basic sanity-check route
@@ -102,34 +104,33 @@ async def getOnlinePlayers(request: Request):
     return "There are no players online."
 
 # return all of a player's info
-@app.get("/players/{name}")
+@app.get(f"/players/{name}")
 async def getPlayerStats(name: str, request: Request):
     try:
-        response, _ = await request.app.state.rcon.send_cmd("data get entity {name}")
+        response, _ = await request.app.state.rcon.send_cmd(f"data get entity {name}")
     except Exception:
         raise HTTPException(status_code=502, detail="Failed to reach Minecraft Server")
 
-    
-    
-
-    return {"message": }
+    return {"message": response}
 
 # return a given player's health
-@app.get("/players/{name}/health")
+@app.get(f"/players/{name}/health")
 async def getPlayerHealth(name: str, reguest: Request):
-    return {"message": "Player Health"}
+    health = get_entity_data(request.app.state.rcon, name, "Pos")
+
+    return {"message": health}
 
 # TODO: not implemented yet - should return a given player's position
-@app.get("/players/{name}/position")
+@app.get(f"/players/{name}/position")
 async def getPlayerPos():
     return {"message": "Players Online"}
 
 # TODO: not implemented yet - should return a given player's hunger/food level
-@app.get("/players/{name}/hunger")
+@app.get(f"/players/{name}/hunger")
 async def getPlayerHunger():
     return {"message": "Player Hunger"}
 
 # TODO: not implemented yet - should return a given player's XP level
-@app.get("/players/{name}/xp")
+@app.get(f"/players/{name}/xp")
 async def getPlayerXp():
     return {"message": "Player xp"}
