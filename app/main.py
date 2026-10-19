@@ -47,7 +47,7 @@ async def get_entity_data(rcon, name : str, field : str) -> str:
     if not match:
         raise HTTPException(status_code=502, detail=f"Unexpected RCON response: {response}")
 
-    return {"message": match.group(1)}
+    return match.group(1)
 
 
 # Basic sanity-check route
@@ -103,36 +103,26 @@ async def getOnlinePlayers(request: Request):
 
     return "There are no players online."
 
-# return all of a player's info
-@app.get(f"/players/{name}")
-async def getPlayerStats(name: str, request: Request):
-    try:
-        response, _ = await request.app.state.rcon.send_cmd(f"data get entity {name}")
-    except Exception:
-        raise HTTPException(status_code=502, detail="Failed to reach Minecraft Server")
-
-    return {"message": response}
-
 # return a given player's health
-@app.get(f"/players/{name}/health")
-async def getPlayerHealth(name: str, reguest: Request):
-    health = get_entity_data(request.app.state.rcon, name, "Health")
+@app.get("/players/{name}/health")
+async def getPlayerHealth(name: str = Path(pattern=r"^\w{1,16}$"), request: Request):
+    health = await get_entity_data(request.app.state.rcon, name, "Health")
     return {"message": health}
 
 # return a given player's position
-@app.get(f"/players/{name}/position")
-async def getPlayerPos():
-    pos = get_entity_data(request.app.state.rcon, name, "Pos")
+@app.get("/players/{name}/position")
+async def getPlayerPos(name: str = Path(pattern=r"^\w{1,16}$"), request: Request):
+    pos = await get_entity_data(request.app.state.rcon, name, "Pos")
     return {"message": pos}
 
 # return a given player's hunger/food level
-@app.get(f"/players/{name}/hunger")
-async def getPlayerHunger():
-    hunger = get_entity_data(request.app.state.rcon, name, "hungerLevel")
+@app.get("/players/{name}/hunger")
+async def getPlayerHunger(name: str = Path(pattern=r"^\w{1,16}$"), request: Request):
+    hunger = await get_entity_data(request.app.state.rcon, name, "foodLevel")
     return {"message": hunger}
 
 # return a given player's XP level
-@app.get(f"/players/{name}/xp")
-async def getPlayerXp():
-    xp = get_entity_data(request.app.state.rcon, name, "XpTotal")
+@app.get("/players/{name}/xp")
+async def getPlayerXp(name: str = Path(pattern=r"^\w{1,16}$"), request: Request):
+    xp = await get_entity_data(request.app.state.rcon, name, "XpLevel")
     return {"message": xp}
