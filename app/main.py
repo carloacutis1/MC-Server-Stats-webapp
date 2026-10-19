@@ -116,21 +116,24 @@ async def getPlayerStats(name: str, request: Request):
 # return a given player's health
 @app.get(f"/players/{name}/health")
 async def getPlayerHealth(name: str, reguest: Request):
-    health = get_entity_data(request.app.state.rcon, name, "Pos")
+    health = get_entity_data(request.app.state.rcon, name, "Health")
 
     return {"message": health}
 
-# TODO: not implemented yet - should return a given player's position
+# return a given player's position
 @app.get(f"/players/{name}/position")
 async def getPlayerPos():
-    return {"message": "Players Online"}
+    pos = get_entity_data(request.app.state.rcon, name, "Pos")
+    return {"message": pos}
 
 # TODO: not implemented yet - should return a given player's hunger/food level
 @app.get(f"/players/{name}/hunger")
 async def getPlayerHunger():
-    return {"message": "Player Hunger"}
+    hunger = get_entity_data(request.app.state.rcon, name, "hungerLevel")
+    return {"message": hunger}
 
 # TODO: not implemented yet - should return a given player's XP level
 @app.get(f"/players/{name}/xp")
 async def getPlayerXp():
-    return {"message": "Player xp"}
+    xp = get_entity_data(request.app.state.rcon, name, "XpTotal")
+    return {"message": xp}
