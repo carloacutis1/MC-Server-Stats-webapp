@@ -1,13 +1,17 @@
 from fastapi import FastAPI, HTTPException, Request
 
+import os
 import re
 from contextlib import asynccontextmanager
 import aiomcrcon  # RCON client used to talk to the Minecraft server
 
 # Connection settings for the Minecraft server's RCON interface
-RCON_HOST = "10.40.0.100"
+RCON_HOST = "127.0.0.1"
 RCON_PORT = 25575
-RCON_PASS = "carlo"
+# Read from the environment so the password never lives in source control
+RCON_PASS = os.environ.get("RCON_PASS")
+if not RCON_PASS:
+    raise RuntimeError("RCON_PASS environment variable is not set")
 
 # define list of player names connected
 names = []
@@ -47,7 +51,7 @@ async def get_entity_data(rcon, name : str, field : str) -> str:
     if not match:
         raise HTTPException(status_code=502, detail=f"Unexpected RCON response: {response}")
 
-    return {"message": match.group(1)}
+    return match.group(1)
 
 
 # Basic sanity-check route
@@ -103,34 +107,26 @@ async def getOnlinePlayers(request: Request):
 
     return "There are no players online."
 
-# return all of a player's info
-@app.get(f"/players/{name}")
-async def getPlayerStats(name: str, request: Request):
-    try:
-        response, _ = await request.app.state.rcon.send_cmd(f"data get entity {name}")
-    except Exception:
-        raise HTTPException(status_code=502, detail="Failed to reach Minecraft Server")
-
-    return {"message": response}
-
 # return a given player's health
-@app.get(f"/players/{name}/health")
-async def getPlayerHealth(name: str, reguest: Request):
-    health = get_entity_data(request.app.state.rcon, name, "Pos")
-
+@app.get("/players/{name}/health")
+async def getPlayerHealth(name: str = Path(pattern=r"^\w{1,16}$"), request: Request):
+    health = await get_entity_data(request.app.state.rcon, name, "Health")
     return {"message": health}
 
-# TODO: not implemented yet - should return a given player's position
-@app.get(f"/players/{name}/position")
-async def getPlayerPos():
-    return {"message": "Players Online"}
+# return a given player's position
+@app.get("/players/{name}/position")
+async def getPlayerPos(name: str = Path(pattern=r"^\w{1,16}$"), request: Request):
+    pos = await get_entity_data(request.app.state.rcon, name, "Pos")
+    return {"message": pos}
 
-# TODO: not implemented yet - should return a given player's hunger/food level
-@app.get(f"/players/{name}/hunger")
-async def getPlayerHunger():
-    return {"message": "Player Hunger"}
+# return a given player's hunger/food level
+@app.get("/players/{name}/hunger")
+async def getPlayerHunger(name: str = Path(pattern=r"^\w{1,16}$"), request: Request):
+    hunger = await get_entity_data(request.app.state.rcon, name, "foodLevel")
+    return {"message": hunger}
 
-# TODO: not implemented yet - should return a given player's XP level
-@app.get(f"/players/{name}/xp")
-async def getPlayerXp():
-    return {"message": "Player xp"}
+# return a given player's XP level
+@app.get("/players/{name}/xp")
+async def getPlayerXp(name: str = Path(pattern=r"^\w{1,16}$"), request: Request):
+    xp = await get_entity_data(request.app.state.rcon, name, "XpLevel")
+    return {"message": xp}
