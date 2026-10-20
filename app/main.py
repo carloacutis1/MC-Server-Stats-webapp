@@ -1,13 +1,17 @@
 from fastapi import FastAPI, HTTPException, Request
 
+import os
 import re
 from contextlib import asynccontextmanager
 import aiomcrcon  # RCON client used to talk to the Minecraft server
 
 # Connection settings for the Minecraft server's RCON interface
-RCON_HOST = "10.40.0.100"
+RCON_HOST = "127.0.0.1"
 RCON_PORT = 25575
-RCON_PASS = "carlo"
+# Read from the environment so the password never lives in source control
+RCON_PASS = os.environ.get("RCON_PASS")
+if not RCON_PASS:
+    raise RuntimeError("RCON_PASS environment variable is not set")
 
 # define list of player names connected
 names = []
