@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Path, Request
 
 import os
 import re
@@ -6,8 +6,8 @@ from contextlib import asynccontextmanager
 import aiomcrcon  # RCON client used to talk to the Minecraft server
 
 # Connection settings for the Minecraft server's RCON interface
-RCON_HOST = "127.0.0.1"
-RCON_PORT = 25575
+RCON_HOST = os.environ.get("RCON_HOST")
+RCON_PORT = int(os.environ.get("RCON_PORT"))
 # Read from the environment so the password never lives in source control
 RCON_PASS = os.environ.get("RCON_PASS")
 if not RCON_PASS:
@@ -109,24 +109,24 @@ async def getOnlinePlayers(request: Request):
 
 # return a given player's health
 @app.get("/players/{name}/health")
-async def getPlayerHealth(name: str = Path(pattern=r"^\w{1,16}$"), request: Request):
+async def getPlayerHealth(request: Request, name: str = Path(pattern=r"^\w{1,16}$")):
     health = await get_entity_data(request.app.state.rcon, name, "Health")
     return {"message": health}
 
 # return a given player's position
 @app.get("/players/{name}/position")
-async def getPlayerPos(name: str = Path(pattern=r"^\w{1,16}$"), request: Request):
+async def getPlayerPos(request: Request, name: str = Path(pattern=r"^\w{1,16}$")):
     pos = await get_entity_data(request.app.state.rcon, name, "Pos")
     return {"message": pos}
 
 # return a given player's hunger/food level
 @app.get("/players/{name}/hunger")
-async def getPlayerHunger(name: str = Path(pattern=r"^\w{1,16}$"), request: Request):
+async def getPlayerHunger(request: Request, name: str = Path(pattern=r"^\w{1,16}$")):
     hunger = await get_entity_data(request.app.state.rcon, name, "foodLevel")
     return {"message": hunger}
 
 # return a given player's XP level
 @app.get("/players/{name}/xp")
-async def getPlayerXp(name: str = Path(pattern=r"^\w{1,16}$"), request: Request):
+async def getPlayerXp(request: Request, name: str = Path(pattern=r"^\w{1,16}$")):
     xp = await get_entity_data(request.app.state.rcon, name, "XpLevel")
     return {"message": xp}
